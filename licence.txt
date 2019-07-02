@@ -1,3 +1,5 @@
+Source: https://github.com/Ericsson/ETCPACK
+=======================================================================
 Software License Agreement
 
 PLEASE REVIEW THE FOLLOWING TERMS AND CONDITIONS PRIOR TO USING THE
