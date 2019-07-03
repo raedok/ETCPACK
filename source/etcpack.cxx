@@ -159,6 +159,9 @@ void setupAlphaTable();
 #define	TABLE_BITS_59T 3
 #define	TABLE_BITS_58H 3
 
+using namespace std;
+#include <fstream>
+
 // Global tables
 static uint8 table59T[8] = {3,6,11,16,23,32,41,64};  // 3-bit table for the 59 bit T-mode
 static uint8 table58H[8] = {3,6,11,16,23,32,41,64};  // 3-bit table for the 58 bit H-mode
@@ -454,6 +457,24 @@ int find_pos_of_extension(char *src)
 		return q;
 }
 
+
+// Copy file from source to destination
+void copy(char* srcFile, char* destFile) {
+  std::ifstream src;
+  std::ofstream dst;
+
+  src.open(srcFile, std::ios::in | std::ios::binary);
+  dst.open(destFile, std::ios::out | std::ios::binary);
+  dst << src.rdbuf();
+}
+
+// Move file from source to destination
+void move(char* src, char* dest) {
+  copy(src, dest);
+  remove(src);
+}
+
+
 // Read source file. Does conversion if file format is not .ppm.
 // Will expand file to be divisible by four in the x- and y- dimension.
 // NO WARRANTY --- SEE STATEMENT IN TOP OF FILE (C) Ericsson AB 2005-2013. All Rights Reserved.
@@ -467,16 +488,18 @@ bool readSrcFile(char *filename,uint8 *&img,int &width,int &height, int &expande
 	// Delete temp file if it exists.
 	if(fileExist("tmp.ppm"))
 	{
-		sprintf(str, "del tmp.ppm\n");
-		system(str);
+		remove("tmp.ppm");
+		//sprintf(str, "del tmp.ppm\n");
+		//system(str);
 	}
 
 	int q = find_pos_of_extension(filename);
 	if(!strcmp(&filename[q],".ppm")) 
 	{
 		// Already a .ppm file. Just copy. 
-		sprintf(str,"copy %s tmp.ppm \n", filename);
-		printf("Copying source file to tmp.ppm\n", filename);
+		copy(filename, "tmp.ppm");
+		//sprintf(str,"copy %s tmp.ppm \n", filename);
+		//printf("Copying source file to tmp.ppm\n", filename);
 	}
 	else
 	{
@@ -490,9 +513,10 @@ bool readSrcFile(char *filename,uint8 *&img,int &width,int &height, int &expande
 		//
 		sprintf(str,"magick convert %s tmp.ppm\n", filename);
 		printf("Converting source file from %s to .ppm\n", filename);
+
+		// Execute system call
+		system(str);
 	}
-	// Execute system call
-	system(str);
 
 	int bitrate=8;
 	if(format==ETC2PACKAGE_RG_NO_MIPMAPS)
@@ -501,7 +525,8 @@ bool readSrcFile(char *filename,uint8 *&img,int &width,int &height, int &expande
 	{
 		width=w1;
 		height=h1;
-		system("del tmp.ppm");
+		//system("del tmp.ppm");
+		remove("tmp.ppm");
 
 		// Width must be divisible by 4 and height must be
 		// divisible by 4. Otherwise, we will expand the image
@@ -565,8 +590,9 @@ bool readSrcFileNoExpand(char *filename,uint8 *&img,int &width,int &height)
 	// Delete temp file if it exists.
 	if(fileExist("tmp.ppm"))
 	{
-		sprintf(str, "del tmp.ppm\n");
-		system(str);
+		//sprintf(str, "del tmp.ppm\n");
+		//system(str);
+		remove("tmp.ppm");
 	}
 
 
@@ -574,8 +600,9 @@ bool readSrcFileNoExpand(char *filename,uint8 *&img,int &width,int &height)
 	if(!strcmp(&filename[q],".ppm")) 
 	{
 		// Already a .ppm file. Just copy. 
-		sprintf(str,"copy %s tmp.ppm \n", filename);
-		printf("Copying source file to tmp.ppm\n", filename);
+		//sprintf(str,"copy %s tmp.ppm \n", filename);
+		//printf("Copying source file to tmp.ppm\n", filename);
+		copy(filename, "tmp.ppm");
 	}
 	else
 	{
@@ -589,15 +616,16 @@ bool readSrcFileNoExpand(char *filename,uint8 *&img,int &width,int &height)
 		//
 		sprintf(str,"magick convert %s tmp.ppm\n", filename);
 //		printf("Converting source file from %s to .ppm\n", filename);
+		// Execute system call
+		system(str);
 	}
-	// Execute system call
-	system(str);
 
 	if(fReadPPM("tmp.ppm",w1,h1,img,8))
 	{
 		width=w1;
 		height=h1;
-		system("del tmp.ppm");
+		//system("del tmp.ppm");
+		remove("tmp.ppm");
 
 		return true;
 	}
@@ -9478,16 +9506,18 @@ void writeOutputFile(char *dstfile, uint8* img, uint8* alphaimg, int width, int 
 	// Delete destination file if it exists
 	if(fileExist(dstfile))
 	{
-		sprintf(str, "del %s\n",dstfile);	
-		system(str);
+		//sprintf(str, "del %s\n",dstfile);	
+		//system(str);
+		remove(dstfile);
 	}
 
 	int q = find_pos_of_extension(dstfile);
 	if(!strcmp(&dstfile[q],".ppm")&&format!=ETC2PACKAGE_R_NO_MIPMAPS) 
 	{
 		// Already a .ppm file. Just rename. 
-		sprintf(str,"move tmp.ppm %s\n",dstfile);
-		printf("Renaming destination file to %s\n",dstfile);
+		//sprintf(str,"move tmp.ppm %s\n",dstfile);
+		//printf("Renaming destination file to %s\n",dstfile);
+		move("tmp.ppm", dstfile);
 	}
 	else
 	{
@@ -9526,9 +9556,9 @@ void writeOutputFile(char *dstfile, uint8* img, uint8* alphaimg, int width, int 
 			sprintf(str,"magick convert tmp.ppm %s\n",dstfile);
 			printf("Converting destination file from .ppm to %s\n",dstfile);
 		}
+		// Execute system call
+		system(str);
 	}
-	// Execute system call
-	system(str);
 	
 	free(img);
 	if(alphaimg!=NULL)
